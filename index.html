@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+  </head>
+  <body>
+    <h1>File Uploader</h1>
+
+    <input type="file" id="file" />
+
+    <button id="btn-upload">Read & Upload</button>
+
+    <div id="progress">Progression</div>
+
+    <script src="index.js"></script>
+    <script>
+        const btnUpload = document.querySelector('#btn-upload');
+        const progress = document.querySelector('#progress');
+        const file = document.querySelector('#file');
+
+        btnUpload.addEventListener('click', () => {
+          const fileReader = new FileReader();
+          const userFile = file.files[0];
+
+          fileReader.onload = async ev => {
+            const CHUNK_SIZE = 1000;
+            const chunkCount = ev.target.result.byteLength / CHUNK_SIZE;
+
+            console.log("Read successfully");
+
+            const fileName = Math.random() * 1000 + userFile.name;
+
+            for (let chunkID = 0; chunkID < chunkCount+1; chunkID++) {
+              const chunk = ev.target.result.slice(chunkID * CHUNK_SIZE, chunkID * CHUNK_SIZE + CHUNK_SIZE);
+              await fetch ("http://localhost:8080/upload", {
+                "method": "POST",
+                "headers": {
+                  "content-type": "application/octet-stream",
+                  "content-length": chunk.length,
+                  "file-name": fileName
+                },
+                "body": chunk
+              });
+              progress.textContent = Math.round(chunkID * 100 / chunkCount, 0) + "%";
+            }
+
+            console.log(ev.target.result.byteLength);
+          }
+
+          fileReader.readAsArrayBuffer(userFile); // async call
+
+        });
+    </script>
+  </body>
+</html>
